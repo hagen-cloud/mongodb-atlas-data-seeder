@@ -49,7 +49,7 @@ jobs:
       - name: Build image without publishing
         run: docker build -t hc-seeder:ci .
       - name: Image dry-run without network access
-        run: docker run --rm --network none -v "$PWD/config:/etc/seeder:ro" hc-seeder:ci --config /etc/seeder/config.test.yaml --dry-run 2
+        run: docker run --rm --network none -v "$PWD/config:/etc/seeder:ro" hc-seeder:ci --config /etc/seeder/config.test.yaml --dry-run 2 > /dev/null
       - name: Validate Compose with empty example credentials
         run: |
           cp .env.example .env
