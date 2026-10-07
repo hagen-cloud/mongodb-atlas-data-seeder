@@ -1,0 +1,71 @@
+# Indexed Job: K parallel pods (shards). Each pod gets a unique
+# JOB_COMPLETION_INDEX used to seed its RNG, so shards use independent seeded streams. ObjectIds are not deterministic. Set completions == parallelism == K
+# and SEEDER_SHARD_TOTAL == K.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mongo-seeder
+  namespace: mongo-seeder
+spec:
+  completionMode: Indexed
+  completions: 5
+  parallelism: 5
+  backoffLimit: 6
+  activeDeadlineSeconds: 86400      # hard time cap (24h)
+  ttlSecondsAfterFinished: 3600     # auto-cleanup 1h after finish
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mongodb-atlas-data-seeder
+    spec:
+      restartPolicy: OnFailure
+      # Dedicated node pool so the test is isolated from other workloads.
+      nodeSelector:
+        workload: data-seeder
+      tolerations:
+        - key: workload
+          operator: Equal
+          value: data-seeder
+          effect: NoSchedule
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+      containers:
+        - name: seeder
+          image: registry.example.invalid/hagen-cloud/mongodb-atlas-data-seeder:0.1.0   # set the tag you pushed
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SEEDER_SHARD_TOTAL
+              value: "5"               # must equal .spec.completions
+            - name: SEEDER_CONFIG
+              value: /etc/seeder/config.yaml
+            # JOB_COMPLETION_INDEX is injected automatically by the Indexed Job.
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-seeder-uri   # runtime-managed Secret; never commit real values
+                  key: uri
+          resources:
+            requests:
+              cpu: "6"               # requests == limits => Guaranteed QoS; CPU limits still apply
+              memory: 8Gi
+            limits:
+              cpu: "6"
+              memory: 8Gi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/seeder
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: config
+          configMap:
+            name: seeder-config
+        - name: tmp
+          emptyDir: {}
