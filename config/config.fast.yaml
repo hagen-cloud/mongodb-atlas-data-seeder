@@ -1,0 +1,38 @@
+# Fast-fill config for functional testing: large, high-entropy documents to
+# reach a disk target quickly. Pairs with config/templates/bulk.json.
+# Use with docker compose by setting SEEDER_CONFIG_FILE=config.fast.yaml in .env,
+# or directly: python -m seeder --config config/config.fast.yaml
+env: "pre"
+
+target:
+  size: "1GB"            # small functional-test target for a functional test
+  metric: "totalSize"    # real disk usage (storageSize + indexSize); use "dataSize" for logical volume
+  overshoot: 1.0
+  check_interval_s: 10
+
+write:
+  procs: 8               # use all available cores (document generation is CPU-bound)
+  threads: 4
+  batch_size: 25         # small: ~100KB documents -> keeps memory bounded
+  ordered: false
+  write_concern_w: 1
+  journal: false
+  compressors: "zstd"    # switch to "snappy"/none to fill disk faster (less compression)
+
+connection:
+  uri_env: "MONGODB_URI"
+  server_selection_timeout_ms: 30000
+
+safety:
+  require_env: "pre"
+  prod_host_blocklist:
+    - "prod"
+    - "production"
+
+create_indexes: false
+
+databases:
+  - name: seed_bulk
+    collection: blobs
+    weight: 1
+    template: bulk.json

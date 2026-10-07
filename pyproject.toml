@@ -1,0 +1,34 @@
+[project]
+name = "mongodb-atlas-data-seeder"
+version = "0.1.0"
+authors = [{name = "Hagen Cloud"}]
+description = "Multi-process/threaded MongoDB Atlas mock data seeder that fills a cluster to a configurable storage target."
+requires-python = ">=3.11"
+dependencies = [
+    "pymongo[zstd]>=4.8,<5",
+    "Faker>=25,<31",
+    "PyYAML>=6,<7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.5,<1",
+]
+
+[project.urls]
+Repository = "https://github.com/hagen-cloud/mongodb-atlas-data-seeder"
+Issues = "https://github.com/hagen-cloud/mongodb-atlas-data-seeder/issues"
+
+[project.scripts]
+seeder = "seeder.__main__:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["seeder*"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"

@@ -1,0 +1,45 @@
+# Example seeder configuration.
+# Copy to config.yaml and adjust. In Kubernetes this whole file plus the
+# template JSONs are delivered via a ConfigMap mounted at /etc/seeder.
+
+env: "pre"            # logical environment; must match safety.require_env below
+
+target:
+  size: "4TB"          # stop once the measured metric reaches this size
+  metric: "storageSize"  # storageSize | dataSize | totalSize | fsUsedSize
+  overshoot: 0.99      # stop at 99% of target to absorb in-flight batches from all pods
+  check_interval_s: 30 # how often each pod polls dbStats
+
+write:
+  procs: 3             # worker processes per pod (~ vCPUs - 1)
+  threads: 4           # threads per process (I/O concurrency on bulk_write)
+  batch_size: 5000     # docs per insert_many
+  ordered: false       # unordered bulk inserts are faster and tolerate per-doc errors
+  write_concern_w: 1   # ack from primary only (test data)
+  journal: false       # skip journal ack for throughput (test data)
+  compressors: "zstd"  # wire compression
+  # max_pool_size: 5   # defaults to threads + 1 when omitted
+
+connection:
+  uri_env: "MONGODB_URI"          # env var holding the connection string (from the runtime secret source)
+  server_selection_timeout_ms: 30000
+
+safety:
+  require_env: "pre"              # refuse to run unless env == this value (empty disables)
+  prod_host_blocklist:            # refuse if any token appears in the URI
+    - "prod"
+    - "production"
+
+create_indexes: true              # shard 0 creates the indexes declared in the templates
+
+# templates_dir: /etc/seeder      # defaults to a "templates" dir next to this file
+
+databases:
+  - name: seed_transactions
+    collection: payments
+    weight: 5
+    template: transactions.json
+  - name: seed_customers
+    collection: customers
+    weight: 3
+    template: customers.json

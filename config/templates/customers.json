@@ -1,0 +1,22 @@
+{
+  "schema": {
+    "name": { "type": "faker", "method": "name" },
+    "email": { "type": "faker", "method": "email" },
+    "document": { "type": "faker", "method": "ssn" },
+    "phone": { "type": "faker", "method": "phone_number" },
+    "birth_date": { "type": "date", "min": "1950-01-01", "max": "2005-12-31" },
+    "active": { "type": "bool", "p_true": 0.85 },
+    "segment": { "type": "enum", "values": ["retail", "premium", "corporate"] },
+    "address": {
+      "type": "object",
+      "fields": {
+        "street": { "type": "faker", "method": "street_address" },
+        "city": { "type": "faker", "method": "city" },
+        "state": { "type": "faker", "method": "state_abbr" },
+        "zipcode": { "type": "faker", "method": "postcode" }
+      }
+    },
+    "created_at": { "type": "date", "min": "2020-01-01", "max": "2025-12-31" }
+  },
+  "indexes": []
+}

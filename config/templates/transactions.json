@@ -1,0 +1,28 @@
+{
+  "schema": {
+    "customer_id": { "type": "objectId" },
+    "amount": { "type": "double", "min": 1, "max": 100000, "decimals": 2 },
+    "currency": { "type": "enum", "values": ["BRL", "USD", "EUR"] },
+    "status": { "type": "enum", "values": ["approved", "denied", "pending", "refunded"] },
+    "method": { "type": "enum", "values": ["credit", "debit", "pix", "boleto"] },
+    "card_last4": { "type": "string", "length": 4, "charset": "digits" },
+    "merchant": { "type": "faker", "method": "company" },
+    "description": { "type": "faker", "method": "catch_phrase" },
+    "created_at": { "type": "date", "min": "2023-01-01", "max": "2025-12-31" },
+    "metadata": {
+      "type": "object",
+      "fields": {
+        "ip": { "type": "faker", "method": "ipv4" },
+        "user_agent": { "type": "faker", "method": "user_agent" },
+        "installments": { "type": "int", "min": 1, "max": 12 }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 4,
+      "of": { "type": "faker", "method": "word" }
+    }
+  },
+  "indexes": []
+}
