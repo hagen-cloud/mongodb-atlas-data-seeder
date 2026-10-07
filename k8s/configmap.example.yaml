@@ -1,0 +1,50 @@
+# Delivers config.yaml + the bulk template to the pods at /etc/seeder.
+# Configured for bulk fill: large, high-entropy documents, no indexes.
+# (Alternatively, generate it: kubectl -n mongo-seeder create configmap seeder-config \
+#   --from-file=config.yaml=config/config.fast.yaml \
+#   --from-file=config/templates/bulk.json --dry-run=client -o yaml)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: seeder-config
+  namespace: mongo-seeder
+data:
+  config.yaml: |
+    env: "pre"
+    target:
+      size: "3TB"
+      metric: "storageSize"
+      overshoot: 1.0
+      check_interval_s: 30
+    write:
+      procs: 5                 # leaves ~1 of the pod's 6 vCPU for the monitor + OS
+      threads: 4
+      batch_size: 25           # ~100KB documents -> small batch keeps memory bounded
+      ordered: false
+      write_concern_w: 1
+      journal: false
+      compressors: "zstd"
+    connection:
+      uri_env: "MONGODB_URI"
+      server_selection_timeout_ms: 30000
+    safety:
+      require_env: "pre"
+      prod_host_blocklist:
+        - "prod"
+        - "production"
+    create_indexes: false
+    templates_dir: /etc/seeder
+    databases:
+      - name: seed_bulk
+        collection: blobs
+        weight: 1
+        template: bulk.json
+  bulk.json: |
+    {
+      "schema": {
+        "created_at": { "type": "date", "min": "2023-01-01", "max": "2025-12-31" },
+        "seq": { "type": "int", "min": 0, "max": 1000000000 },
+        "payload": { "type": "string", "length": 100000, "charset": "alnum" }
+      },
+      "indexes": []
+    }

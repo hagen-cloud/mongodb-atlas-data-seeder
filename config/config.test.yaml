@@ -1,0 +1,41 @@
+# Small-target config for functional testing (does NOT try to fill 4TB).
+# Use with docker compose by setting SEEDER_CONFIG_FILE=config.test.yaml in .env,
+# or directly: python -m seeder --config config/config.test.yaml
+env: "pre"
+
+target:
+  size: "1GB"            # small functional-test target for a functional test
+  metric: "storageSize"
+  overshoot: 1.0
+  check_interval_s: 15
+
+write:
+  procs: 2
+  threads: 4
+  batch_size: 5000
+  ordered: false
+  write_concern_w: 1
+  journal: false
+  compressors: "zstd"
+
+connection:
+  uri_env: "MONGODB_URI"
+  server_selection_timeout_ms: 30000
+
+safety:
+  require_env: "pre"
+  prod_host_blocklist:
+    - "prod"
+    - "production"
+
+create_indexes: true
+
+databases:
+  - name: seed_transactions
+    collection: payments
+    weight: 5
+    template: transactions.json
+  - name: seed_customers
+    collection: customers
+    weight: 3
+    template: customers.json

@@ -1,0 +1,23 @@
+# Build the local image; configure .env and mount the selected config.
+# Use --dry-run to generate documents without connecting to MongoDB.
+services:
+  seeder:
+    image: ${SEEDER_IMAGE:-mongodb-atlas-data-seeder:local}
+    build: .
+    pull_policy: never
+    env_file:
+      - .env
+    environment:
+      SEEDER_CONFIG: /etc/seeder/${SEEDER_CONFIG_FILE:-config.test.yaml}
+      SEEDER_SHARD_TOTAL: "1"
+      JOB_COMPLETION_INDEX: "0"
+    volumes:
+      - ./config:/etc/seeder:ro
+    restart: "no"
+
+  # Optional disposable MongoDB for local tests; never an Atlas endpoint.
+  mongo:
+    image: mongo:7
+    profiles: ["local"]
+    ports:
+      - "127.0.0.1:27018:27017"
