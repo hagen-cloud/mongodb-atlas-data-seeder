@@ -57,7 +57,8 @@ def _thread_loop(client: MongoClient, cfg: Config, stop_event, seed: int) -> Non
             client[database.name][database.collection].insert_many(docs, ordered=cfg.write.ordered)
             inserted += len(docs)
         except Exception as exc:  # noqa: BLE001  # keep the run alive through transient cluster pressure
-            log.warning("insert failed (%s): %s", type(exc).__name__, exc)
+            # Driver exceptions can include connection details or document contents.
+            log.warning("insert failed (%s); retrying after backoff", type(exc).__name__)
             stop_event.wait(1.0)
 
     log.info("thread seed=%s finished inserted=%d", seed, inserted)
